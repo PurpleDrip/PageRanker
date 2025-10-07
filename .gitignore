@@ -1,3 +1,36 @@
+# Binaries for programs and plugins
 .env
-PageRanker.exe
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Output of the Go coverage tool
+*.coverprofile
+
+# Build directories
+/bin/
+/build/
+/dist/
+
+# Dependency directories (remove if vendoring)
 vendor/
+
+# Go workspace files
+go.sum
+go.mod
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# OS files
+.DS_Store
+Thumbs.db
