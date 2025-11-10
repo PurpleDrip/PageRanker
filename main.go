@@ -2,32 +2,48 @@ package main
 
 import (
 	"fmt"
-	// "log"
-	// "net/url"
-	// "os"
+	"time"
 )
 
-
-
 func main() {
+	fmt.Println("Select Dataset:")
+	fmt.Println("1) small.txt")
+	fmt.Println("2) web-Stanford.txt")
+	fmt.Println("3) web-Google.txt")
 
-	CPU_CORES := 10
-	var choice int;
+	var choice int
+	fmt.Print("Enter: ")
+	fmt.Scan(&choice)
 
-	fmt.Println("Welcome to the PageRank Algorithm Implementation in GoLang!");
-	fmt.Println("Please choose one of the following options to proceed:");
+	path := ""
+	switch choice {
+	case 1:
+		path = "datasets/small.txt"
+	case 2:
+		path = "datasets/web-Stanford.txt"
+	case 3:
+		path = "datasets/web-Google.txt"
+	default:
+		fmt.Println("Invalid choice")
+		return
+	}
 
-	fmt.Println("1 -- Low Level Stimulated Directed Graph of Webpages. N = 20, E = 62");
-	fmt.Println("2 -- Medium Level Stimulated Directed Graph of Webpages using the 'WEB-STANFORD.txt' Dataset.");
-	fmt.Println("3 -- High Level Stimulated Directed Graph of Webpages using the 'WEB-GOOGLE.txt' Dataset.");
+	graph, err := LoadGraph(path)
+	if err != nil {
+		panic(err)
+	}
 
-	fmt.Scanln(&choice);
+	VisualizeGraph(graph)
 
-	fmt.Println("The PageRank Algorithm will run in parallel using", CPU_CORES, "CPU cores.");
+	fmt.Println("Running Serial PageRank...")
+	start := time.Now()
+	r1 := PageRankSerial(graph, 20, 0.85)
+	fmt.Println("Time:", time.Since(start))
+	PrintTop(r1, 10)
 
-	AdjacencyList adjacencyList = constructGraphFromDataset(choice);
-
-	
-
-
+	fmt.Println("\nRunning Parallel PageRank (10 workers)...")
+	start = time.Now()
+	r2 := PageRankParallel(graph, 20, 0.85, 10)
+	fmt.Println("Time:", time.Since(start))
+	PrintTop(r2, 10)
 }
