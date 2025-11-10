@@ -1,25 +1,27 @@
 package main
 
-import (
-	"fmt"
-	"sort"
-)
+import "fmt"
 
-func PrintTop(rank map[int]float64, k int) {
-	type Pair struct {
-		Node int
-		Score float64
+// PrintTop prints top 10 ranked nodes
+func PrintTop(rank map[string]float64) {
+	type kv struct {
+		Key   string
+		Value float64
 	}
-	var arr []Pair
-	for n, v := range rank {
-		arr = append(arr, Pair{n, v})
+	var sorted []kv
+	for k, v := range rank {
+		sorted = append(sorted, kv{k, v})
 	}
-	sort.Slice(arr, func(i, j int) bool {
-		return arr[i].Score > arr[j].Score
-	})
-
-	fmt.Println("\nTop Ranked Nodes:")
-	for i := 0; i < k && i < len(arr); i++ {
-		fmt.Printf("%d → %.6f\n", arr[i].Node, arr[i].Score)
+	// Simple bubble sort (small top 10, OK)
+	for i := 0; i < len(sorted)-1; i++ {
+		for j := i + 1; j < len(sorted); j++ {
+			if sorted[j].Value > sorted[i].Value {
+				sorted[i], sorted[j] = sorted[j], sorted[i]
+			}
+		}
+	}
+	fmt.Println("Top Ranked Nodes:")
+	for i := 0; i < 10 && i < len(sorted); i++ {
+		fmt.Printf("%s → %.6f\n", sorted[i].Key, sorted[i].Value)
 	}
 }

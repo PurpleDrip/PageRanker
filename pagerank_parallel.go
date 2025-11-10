@@ -4,46 +4,54 @@ import (
 	"sync"
 )
 
-func PageRankParallel(g *Graph, iterations int, d float64, workers int) map[int]float64 {
-	N := float64(len(g.Nodes))
-	rank := make(map[int]float64)
-	newRank := make(map[int]float64)
-
-	for _, v := range g.Nodes {
-		rank[v] = 1.0 / N
+// Parallel PageRank with mutex
+func PageRankParallel(g *Graph, iterations int, damping float64, workers int) map[string]float64 {
+	n := len(g.Nodes)
+	rank := make(map[string]float64)
+	for node := range g.Nodes {
+		rank[node] = 1.0 / float64(n)
 	}
 
-	chunk := len(g.Nodes) / workers
-
-	for iter := 0; iter < iterations; iter++ {
+	for i := 0; i < iterations; i++ {
+		newRank := make(map[string]float64)
+		for node := range g.Nodes {
+			newRank[node] = (1 - damping) / float64(n)
+		}
 
 		var wg sync.WaitGroup
-		wg.Add(workers)
+		var mu sync.Mutex
 
+		nodes := make([]string, 0, len(g.Nodes))
+		for node := range g.Nodes {
+			nodes = append(nodes, node)
+		}
+
+		chunkSize := (len(nodes) + workers - 1) / workers
 		for w := 0; w < workers; w++ {
-			start := w * chunk
-			end := start + chunk
-			if w == workers-1 {
-				end = len(g.Nodes)
+			start := w * chunkSize
+			end := start + chunkSize
+			if end > len(nodes) {
+				end = len(nodes)
 			}
-
-			go func(start, end int) {
+			wg.Add(1)
+			go func(subnodes []string) {
 				defer wg.Done()
-				for i := start; i < end; i++ {
-					v := g.Nodes[i]
-					newRank[v] = (1 - d) / N
-					for _, u := range g.Incoming[v] {
-						newRank[v] += d * rank[u] / float64(g.OutDeg[u])
+				for _, node := range subnodes {
+					neighbors := g.Nodes[node]
+					if len(neighbors) == 0 {
+						continue
+					}
+					share := rank[node] * damping / float64(len(neighbors))
+					for _, neighbor := range neighbors {
+						mu.Lock()
+						newRank[neighbor] += share
+						mu.Unlock()
 					}
 				}
-			}(start, end)
+			}(nodes[start:end])
 		}
-
 		wg.Wait()
-
-		for _, v := range g.Nodes {
-			rank[v] = newRank[v]
-		}
+		rank = newRank
 	}
 
 	return rank

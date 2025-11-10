@@ -2,55 +2,46 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os"
-	"strconv"
 	"strings"
 )
 
+// Graph struct
 type Graph struct {
-	Adj      map[int][]int
-	Incoming map[int][]int
-	OutDeg   map[int]int
-	Nodes    []int
+	Nodes map[string][]string
 }
 
-func LoadGraph(path string) (*Graph, error) {
-	file, err := os.Open(path)
+// LoadGraph reads edge list file and creates adjacency list
+func LoadGraph(filename string) (*Graph, error) {
+	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	g := &Graph{
-		Adj:      make(map[int][]int),
-		Incoming: make(map[int][]int),
-		OutDeg:   make(map[int]int),
-	}
-
+	g := &Graph{Nodes: make(map[string][]string)}
 	scanner := bufio.NewScanner(file)
-
 	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "#") || len(strings.TrimSpace(line)) == 0 {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-
 		parts := strings.Fields(line)
-		if len(parts) != 2 {
+		if len(parts) < 2 {
 			continue
 		}
-
-		u, _ := strconv.Atoi(parts[0])
-		v, _ := strconv.Atoi(parts[1])
-
-		g.Adj[u] = append(g.Adj[u], v)
-		g.Incoming[v] = append(g.Incoming[v], u)
-		g.OutDeg[u]++
+		from, to := parts[0], parts[1]
+		g.Nodes[from] = append(g.Nodes[from], to)
+		if _, ok := g.Nodes[to]; !ok {
+			g.Nodes[to] = []string{}
+		}
 	}
 
-	for node := range g.Adj {
-		g.Nodes = append(g.Nodes, node)
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 
+	fmt.Printf("Loaded graph with %d nodes\n", len(g.Nodes))
 	return g, nil
 }

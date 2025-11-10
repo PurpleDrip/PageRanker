@@ -1,24 +1,28 @@
 package main
 
-func PageRankSerial(g *Graph, iterations int, d float64) map[int]float64 {
-	N := float64(len(g.Nodes))
-	rank := make(map[int]float64)
-	newRank := make(map[int]float64)
-
-	for _, v := range g.Nodes {
-		rank[v] = 1.0 / N
+// Serial PageRank
+func PageRankSerial(g *Graph, iterations int, damping float64) map[string]float64 {
+	n := len(g.Nodes)
+	rank := make(map[string]float64)
+	for node := range g.Nodes {
+		rank[node] = 1.0 / float64(n)
 	}
 
 	for i := 0; i < iterations; i++ {
-		for _, v := range g.Nodes {
-			newRank[v] = (1 - d) / N
-			for _, u := range g.Incoming[v] {
-				newRank[v] += d * rank[u] / float64(g.OutDeg[u])
+		newRank := make(map[string]float64)
+		for node := range g.Nodes {
+			newRank[node] = (1 - damping) / float64(n)
+		}
+		for node, neighbors := range g.Nodes {
+			if len(neighbors) == 0 {
+				continue
+			}
+			share := rank[node] * damping / float64(len(neighbors))
+			for _, neighbor := range neighbors {
+				newRank[neighbor] += share
 			}
 		}
-		for _, v := range g.Nodes {
-			rank[v] = newRank[v]
-		}
+		rank = newRank
 	}
 
 	return rank
