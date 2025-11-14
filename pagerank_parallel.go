@@ -29,10 +29,14 @@ func PageRankParallel(g *Graph, iterations int, damping float64, workers int) ma
 		chunkSize := (len(nodes) + workers - 1) / workers
 		for w := 0; w < workers; w++ {
 			start := w * chunkSize
+			if start >= len(nodes) {
+				break
+			}
 			end := start + chunkSize
 			if end > len(nodes) {
 				end = len(nodes)
 			}
+
 			wg.Add(1)
 			go func(subnodes []string) {
 				defer wg.Done()
