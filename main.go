@@ -2,10 +2,25 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
 )
 
 func main() {
-	fmt.Println("Select Dataset:")
+
+	fmt.Println("\n\tTHIS SIMULATION USES 20 ITERATIONS, 0.85 DAMPING FACTOR AND 10 WORKER GO-ROUTINES")
+	fmt.Println("Press 'F' to proceed:")
+
+	var proceed string
+	fmt.Scanln(&proceed)
+
+	if !strings.EqualFold(proceed, "F") {
+		fmt.Println("Exiting Simulation...")
+		os.Exit(0)
+	}
+
+
+	fmt.Println("\nSelect Dataset:")
 	fmt.Println("1) small.txt")
 	fmt.Println("2) web-Stanford.txt")
 	fmt.Println("3) web-Google.txt")

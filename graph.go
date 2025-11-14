@@ -42,6 +42,6 @@ func LoadGraph(filename string) (*Graph, error) {
 		return nil, err
 	}
 
-	fmt.Printf("Loaded graph with %d nodes\n", len(g.Nodes))
+	fmt.Printf("\nLoaded graph with %d nodes\n", len(g.Nodes))
 	return g, nil
 }
