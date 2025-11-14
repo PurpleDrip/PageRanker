@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 )
 
 func main() {
@@ -40,16 +39,12 @@ func main() {
 	}
 
 	// Serial PageRank
-	fmt.Println("\nRunning Serial PageRank...")
-	start := time.Now()
+	fmt.Println("\n\tRunning Serial PageRank...")
 	rankSerial := PageRankSerial(g, 20, 0.85)
-	fmt.Println("Time:", time.Since(start))
 	PrintTop(rankSerial)
 
 	// Parallel PageRank
-	fmt.Println("\nRunning Parallel PageRank (10 workers)...")
-	start = time.Now()
+	fmt.Println("\n\tRunning Parallel PageRank (10 workers)...")
 	rankParallel := PageRankParallel(g, 20, 0.85, 10)
-	fmt.Println("Time:", time.Since(start))
 	PrintTop(rankParallel)
 }

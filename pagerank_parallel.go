@@ -1,62 +1,89 @@
 package main
 
 import (
+	"fmt"
 	"sync"
+	"time"
 )
 
-// Parallel PageRank with mutex
 func PageRankParallel(g *Graph, iterations int, damping float64, workers int) map[string]float64 {
-	n := len(g.Nodes)
-	rank := make(map[string]float64)
-	for node := range g.Nodes {
-		rank[node] = 1.0 / float64(n)
-	}
+    t0 := time.Now()
 
-	for i := 0; i < iterations; i++ {
-		newRank := make(map[string]float64)
-		for node := range g.Nodes {
-			newRank[node] = (1 - damping) / float64(n)
-		}
+    n := len(g.Nodes)
 
-		var wg sync.WaitGroup
-		var mu sync.Mutex
+    rank := make(map[string]float64, n)
+    for node := range g.Nodes {
+        rank[node] = 1.0 / float64(n)
+    }
 
-		nodes := make([]string, 0, len(g.Nodes))
-		for node := range g.Nodes {
-			nodes = append(nodes, node)
-		}
+    nodes := make([]string, 0, n)
+    for node := range g.Nodes {
+        nodes = append(nodes, node)
+    }
 
-		chunkSize := (len(nodes) + workers - 1) / workers
-		for w := 0; w < workers; w++ {
-			start := w * chunkSize
-			if start >= len(nodes) {
-				break
-			}
-			end := start + chunkSize
-			if end > len(nodes) {
-				end = len(nodes)
-			}
+    chunkSize := (n + workers - 1) / workers
 
-			wg.Add(1)
-			go func(subnodes []string) {
-				defer wg.Done()
-				for _, node := range subnodes {
-					neighbors := g.Nodes[node]
-					if len(neighbors) == 0 {
-						continue
-					}
-					share := rank[node] * damping / float64(len(neighbors))
-					for _, neighbor := range neighbors {
-						mu.Lock()
-						newRank[neighbor] += share
-						mu.Unlock()
-					}
-				}
-			}(nodes[start:end])
-		}
-		wg.Wait()
-		rank = newRank
-	}
+    for it := 0; it < iterations; it++ {
 
-	return rank
+        newRank := make(map[string]float64, n)
+        base := (1 - damping) / float64(n)
+        for _, node := range nodes {
+            newRank[node] = base
+        }
+
+        var wg sync.WaitGroup
+        wg.Add(workers)
+
+        partial := make([]map[string]float64, workers)
+        for i := 0; i < workers; i++ {
+            partial[i] = make(map[string]float64)
+        }
+
+        for w := 0; w < workers; w++ {
+            go func(w int) {
+                defer wg.Done()
+
+                start := w * chunkSize
+                if start >= n {
+                    return
+                }
+                end := start + chunkSize
+                if end > n {
+                    end = n
+                }
+
+                local := partial[w]
+
+                for i := start; i < end; i++ {
+                    node := nodes[i]
+                    neighbors := g.Nodes[node]
+
+                    if len(neighbors) == 0 {
+                        continue
+                    }
+
+                    share := rank[node] * damping / float64(len(neighbors))
+
+                    for _, nb := range neighbors {
+                        local[nb] += share
+                    }
+                }
+
+            }(w)
+        }
+
+        wg.Wait()
+
+        for w := 0; w < workers; w++ {
+            for node, val := range partial[w] {
+                newRank[node] += val
+            }
+        }
+
+        rank = newRank
+    }
+
+    fmt.Printf("Parallel PageRank completed in %v\n", time.Since(t0))
+    return rank;
 }
+

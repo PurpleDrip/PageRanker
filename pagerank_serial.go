@@ -1,7 +1,14 @@
 package main
 
+import (
+	"fmt"
+	"time"
+)
+
 // Serial PageRank
 func PageRankSerial(g *Graph, iterations int, damping float64) map[string]float64 {
+	t0 := time.Now()
+
 	n := len(g.Nodes)
 	rank := make(map[string]float64)
 	for node := range g.Nodes {
@@ -25,5 +32,6 @@ func PageRankSerial(g *Graph, iterations int, damping float64) map[string]float6
 		rank = newRank
 	}
 
+    fmt.Printf("Serial PageRank completed in %v\n", time.Since(t0))
 	return rank
 }
